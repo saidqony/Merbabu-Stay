@@ -10,24 +10,37 @@ export async function sendTelegramNewOrderAlert(pesanan: Pesanan, kamar: Kamar):
     return false;
   }
 
+  const pAny = pesanan as any;
+  const kAny = kamar as any;
+
+  const roomName = kAny.nama_kamar || kAny.nama || "Kamar";
+  const roomType = (kAny.tipe || "standard").toUpperCase();
+  
+  const checkInDate = pAny.check_in || pAny.tgl_checkin;
+  const checkOutDate = pAny.check_out || pAny.tgl_checkout;
+  
+  const totalPay = pAny.total_bayar || pAny.total_harga || 0;
+  const totalNights = pAny.jumlah_malam || 1;
+  const totalGuests = pAny.jumlah_tamu || 1;
+
   const message = `
 🏔️ *PESANAN BARU TERBAYAR* 🏔️
 
 *Detail Pesanan:*
 • Kode: \`${pesanan.kode_pesanan}\`
-• Kamar: *${kamar.nama}* (${kamar.tipe.toUpperCase()})
+• Kamar: *${roomName}* (${roomType})
 • Pemesan: ${pesanan.nama_lengkap}
 • Telepon: [${pesanan.no_hp}](tel:${pesanan.no_hp})
 • Email: ${pesanan.email}
 
 *Rincian Jadwal:*
-• Check-In: *${formatTanggal(pesanan.check_in)}*
-• Check-Out: *${formatTanggal(pesanan.check_out)}*
-• Durasi: ${pesanan.jumlah_malam} malam
-• Tamu: ${pesanan.jumlah_tamu} orang
+• Check-In: *${checkInDate ? formatTanggal(checkInDate) : "-"}*
+• Check-Out: *${checkOutDate ? formatTanggal(checkOutDate) : "-"}*
+• Durasi: ${totalNights} malam
+• Tamu: ${totalGuests} orang
 
 *Total Bayar:*
-• *${formatRupiah(pesanan.total_bayar)}*
+• *${formatRupiah(totalPay)}*
 • Status: *PAID (LUNAS)*
 • Waktu Bayar: ${pesanan.paid_at ? formatTanggal(pesanan.paid_at) : "Baru saja"}
 

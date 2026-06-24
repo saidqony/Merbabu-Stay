@@ -48,6 +48,7 @@ export default function AdminDashboardPage() {
     is_active: true,
     is_popular: false,
     fasilitas: [] as string[],
+    jumlah_kamar: 1,
   });
 
   const availableFacilities = [
@@ -88,7 +89,12 @@ export default function AdminDashboardPage() {
           .order("created_at", { ascending: false });
 
         if (bookingsData && !bookingsError) {
-          setPesananList(bookingsData);
+          // Normalize status field for frontend compatibility
+          const normalized = bookingsData.map((b: any) => ({
+            ...b,
+            status: b.status || b.status_pembayaran || "pending",
+          }));
+          setPesananList(normalized);
         } else {
           setPesananList(getMockPesanan());
         }
@@ -145,7 +151,12 @@ export default function AdminDashboardPage() {
         .select("*, kamar(*)")
         .order("created_at", { ascending: false });
       if (data && !error) {
-        setPesananList(data);
+        // Normalize status field for frontend compatibility
+        const normalized = data.map((b: any) => ({
+          ...b,
+          status: b.status || b.status_pembayaran || "pending",
+        }));
+        setPesananList(normalized);
       }
     } catch (err) {
       console.error("Failed to refresh bookings:", err);
@@ -221,6 +232,7 @@ export default function AdminDashboardPage() {
       is_active: true,
       is_popular: false,
       fasilitas: [],
+      jumlah_kamar: 1,
     });
     setShowRoomModal(true);
   };
@@ -240,6 +252,7 @@ export default function AdminDashboardPage() {
     const active = room.is_active !== false && room.status_aktif !== false;
     const popular = room.is_popular === true;
     const facilities = Array.isArray(room.fasilitas) ? room.fasilitas : [];
+    const qty = room.jumlah_kamar || room.stok || 1;
 
     setRoomForm({
       id: room.id,
@@ -257,6 +270,7 @@ export default function AdminDashboardPage() {
       is_active: active,
       is_popular: popular,
       fasilitas: facilities,
+      jumlah_kamar: qty,
     });
     setShowRoomModal(true);
   };
@@ -436,6 +450,8 @@ export default function AdminDashboardPage() {
       if (availableColumns.includes("status_aktif")) payload.status_aktif = roomForm.is_active;
       if (availableColumns.includes("is_popular")) payload.is_popular = roomForm.is_popular;
       if (availableColumns.includes("fasilitas")) payload.fasilitas = roomForm.fasilitas;
+      if (availableColumns.includes("jumlah_kamar")) payload.jumlah_kamar = Number(roomForm.jumlah_kamar || 1);
+      if (availableColumns.includes("stok")) payload.stok = Number(roomForm.jumlah_kamar || 1);
       if (availableColumns.includes("updated_at")) payload.updated_at = new Date().toISOString();
 
       // 3. Execute insert or update query
@@ -970,7 +986,7 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 {/* Tipe Kamar */}
                 <div className="md:col-span-2">
                   <label className="block text-xs font-bold text-[#2D3328] uppercase tracking-wider mb-1">Tipe Kamar</label>
@@ -1009,6 +1025,20 @@ export default function AdminDashboardPage() {
                     value={roomForm.jumlah_bed}
                     onChange={(e) => setRoomForm({ ...roomForm, jumlah_bed: Number(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EDE7DB] text-sm text-[#2D3328] outline-none focus:border-[#7A8B6F] transition-all"
+                  />
+                </div>
+
+                {/* Jumlah Unit Kamar */}
+                <div>
+                  <label className="block text-xs font-bold text-[#2D3328] uppercase tracking-wider mb-1">Unit Tersedia</label>
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    value={roomForm.jumlah_kamar || 1}
+                    onChange={(e) => setRoomForm({ ...roomForm, jumlah_kamar: Number(e.target.value) })}
+                    className="w-full px-3 py-2 rounded-xl border border-[#EDE7DB] text-sm text-[#2D3328] outline-none focus:border-[#7A8B6F] transition-all"
+                    placeholder="Batas unit"
                   />
                 </div>
               </div>

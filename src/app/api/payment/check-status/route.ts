@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Try finding by UUID first, then fallback to kode_pesanan
-    let query = supabase.from("pesanan").select("status, payment_url");
+    let query = supabase.from("pesanan").select("*");
     
     if (orderId.startsWith("MBS-")) {
       query = query.eq("kode_pesanan", orderId);
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      status: pesanan.status,
+      status: pesanan.status || pesanan.status_pembayaran,
       payment_url: pesanan.payment_url,
     });
   } catch (err: any) {

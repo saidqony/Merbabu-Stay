@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-06-24T18:07:44.370Z",
+  "body": {
+    "kamar_id": "8f6504d6-b090-4574-971c-c86638dc13bd",
+    "check_in": "2026-06-25",
+    "check_out": "2026-06-26"
+  },
+  "discoveredColumns": [
+    "id",
+    "user_id",
+    "kamar_id",
+    "tgl_checkin",
+    "tgl_checkout",
+    "total_harga",
+    "duitku_reference",
+    "payment_url",
+    "status_pembayaran",
+    "created_at",
+    "kode_pesanan",
+    "nama_lengkap",
+    "email",
+    "no_hp",
+    "catatan",
+    "jumlah_tamu",
+    "jumlah_malam",
+    "harga_per_malam",
+    "total_bayar",
+    "status",
+    "expired_at",
+    "check_in",
+    "check_out",
+    "cancelled_at",
+    "cancelled_reason",
+    "paid_at",
+    "confirmed_at",
+    "checked_in_at",
+    "checked_out_at"
+  ],
+  "colCheckIn": "tgl_checkin",
+  "colCheckOut": "tgl_checkout",
+  "colStatus": "status_pembayaran",
+  "limit": 1,
+  "overlappingBookings": [
+    {
+      "id": "e48c12d3-e62b-4cda-af1e-3dab5e06df65"
+    }
+  ],
+  "isAvailable": false
+}

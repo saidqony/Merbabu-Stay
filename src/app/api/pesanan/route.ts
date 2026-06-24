@@ -92,25 +92,35 @@ export async function POST(req: NextRequest) {
 
     let colCheckIn = "check_in";
     let colCheckOut = "check_out";
-    let colStatus = "status";
-
     if (availableCols.includes("tgl_checkin")) colCheckIn = "tgl_checkin";
     if (availableCols.includes("tgl_checkout")) colCheckOut = "tgl_checkout";
-    if (availableCols.includes("status_pembayaran")) colStatus = "status_pembayaran";
+    
+    // Prefer 'status' if available (standard), otherwise fallback to 'status_pembayaran'
+    const colStatus = availableCols.includes("status") ? "status" : "status_pembayaran";
 
-    // 4. Double booking prevention (Availability check) using dynamic columns
+    // 4. Double booking prevention (Availability check) using dynamic columns and inventory limits
     const { data: overlapping } = await supabase
       .from("pesanan")
       .select("id")
       .eq("kamar_id", kamar_id)
       .neq(colStatus, "failed")
       .neq(colStatus, "cancelled")
+      .neq(colStatus, "completed")
+      .neq(colStatus, "FAILED")
+      .neq(colStatus, "CANCELLED")
+      .neq(colStatus, "COMPLETED")
       .lt(colCheckIn, check_out)
       .gt(colCheckOut, check_in);
 
-    if (overlapping && overlapping.length > 0) {
+    // Fetch inventory limit dynamically with robust fallbacks
+    let limit = 1;
+    if (room) {
+      limit = (room as any).jumlah_kamar || (room as any).stok || 1;
+    }
+
+    if (overlapping && overlapping.length >= limit) {
       return NextResponse.json(
-        { message: "Kamar sudah dipesan oleh orang lain pada tanggal tersebut." },
+        { message: "Kamar sudah penuh dipesan oleh orang lain pada tanggal tersebut." },
         { status: 400 }
       );
     }
@@ -219,7 +229,7 @@ export async function POST(req: NextRequest) {
     };
     updatePayload[colStatus] = "waiting_payment";
 
-    const { error: updateError } = await supabase
+    const { data: finalPesanan, error: updateError } = await supabase
       .from("pesanan")
       .update(updatePayload)
       .eq("id", pesanan.id)
@@ -228,6 +238,18 @@ export async function POST(req: NextRequest) {
 
     if (updateError) {
       console.error("Failed to update booking with payment details:", updateError);
+    }
+
+    // Trigger pending invoice email in background
+    if (finalPesanan) {
+      try {
+        const { sendInvoiceEmail } = require("@/lib/resend/client");
+        sendInvoiceEmail(finalPesanan, room)
+          .then((s: boolean) => console.log(`[Checkout] Pending invoice email sent: ${s}`))
+          .catch((e: any) => console.error("[Checkout] Failed to send pending invoice email:", e));
+      } catch (notifErr) {
+        console.error("Failed to trigger pending invoice email:", notifErr);
+      }
     }
 
     return NextResponse.json({

@@ -30,26 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ available: true });
     }
 
-    // First try calling the RPC function if it exists in Supabase
-    try {
-      const { data: rpcAvailable, error: rpcError } = await supabase.rpc(
-        "cek_ketersediaan",
-        {
-          p_kamar_id: kamar_id,
-          p_check_in: check_in,
-          p_check_out: check_out,
-        }
-      );
-
-      if (!rpcError && typeof rpcAvailable === "boolean") {
-        return NextResponse.json({ available: rpcAvailable });
-      }
-    } catch (rpcErr) {
-      console.warn("RPC cek_ketersediaan failed, falling back to query...", rpcErr);
-    }
-
-    // Fallback: Direct query to find overlapping active bookings
-    // Active bookings are status NOT IN ('failed', 'cancelled')
+    // Direct query to find overlapping active bookings (bypassing outdated DB RPC functions)
     // Discover columns of 'pesanan' dynamically to handle both old and new schemas safely
     const { data: sampleBooking } = await supabase.from("pesanan").select("*").limit(1);
     
@@ -63,17 +44,24 @@ export async function POST(req: NextRequest) {
 
     let colCheckIn = "check_in";
     let colCheckOut = "check_out";
-    let colStatus = "status";
 
     if (availableCols.includes("tgl_checkin")) colCheckIn = "tgl_checkin";
     if (availableCols.includes("tgl_checkout")) colCheckOut = "tgl_checkout";
-    if (availableCols.includes("status_pembayaran")) colStatus = "status_pembayaran";
+    
+    // Prefer 'status' if available (standard), otherwise fallback to 'status_pembayaran'
+    const colStatus = availableCols.includes("status") ? "status" : "status_pembayaran";
 
     // Build the query dynamically
     let query = supabase.from("pesanan").select("id").eq("kamar_id", kamar_id);
 
-    // Filter out failed/cancelled bookings
-    query = query.neq(colStatus, "failed").neq(colStatus, "cancelled");
+    // Filter out failed/cancelled/completed bookings (case-insensitive checks to handle both lowercase and uppercase variants in DB)
+    query = query
+      .neq(colStatus, "failed")
+      .neq(colStatus, "cancelled")
+      .neq(colStatus, "completed")
+      .neq(colStatus, "FAILED")
+      .neq(colStatus, "CANCELLED")
+      .neq(colStatus, "COMPLETED");
 
     // Overlapping dates logic: check-in < p_check_out AND check-out > p_check_in
     query = query.lt(colCheckIn, check_out).gt(colCheckOut, check_in);
@@ -88,7 +76,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isAvailable = !overlappingBookings || overlappingBookings.length === 0;
+    // Fetch the room details to get the inventory limit
+    let limit = 1;
+    try {
+      const { data: room } = await supabase
+        .from("kamar")
+        .select("*")
+        .eq("id", kamar_id)
+        .single();
+      
+      if (room) {
+        limit = room.jumlah_kamar || room.stok || 1;
+      }
+    } catch (roomErr) {
+      console.warn("Failed to fetch room inventory limit, defaulting to 1:", roomErr);
+    }
+
+    const isAvailable = !overlappingBookings || overlappingBookings.length < limit;
 
     return NextResponse.json({ available: isAvailable });
   } catch (err: any) {

@@ -14,10 +14,24 @@ export async function POST(
       return NextResponse.json({ message: "ID Pesanan wajib diisi." }, { status: 400 });
     }
 
-    // 1. Fetch current order status
+    // 1. Fetch current order with dynamic column discovery to handle both status and status_pembayaran
+    const { data: sampleBooking } = await supabase.from("pesanan").select("*").limit(1);
+    
+    let availableCols: string[] = [];
+    if (sampleBooking && sampleBooking.length > 0) {
+      availableCols = Object.keys(sampleBooking[0]);
+    } else {
+      availableCols = ["id", "status", "status_pembayaran", "kode_pesanan"];
+    }
+
+    let colStatus = "status";
+    if (availableCols.includes("status_pembayaran")) {
+      colStatus = "status_pembayaran";
+    }
+
     const { data: pesanan, error: fetchError } = await supabase
       .from("pesanan")
-      .select("id, status, kode_pesanan")
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -25,26 +39,35 @@ export async function POST(
       return NextResponse.json({ message: "Pesanan tidak ditemukan." }, { status: 404 });
     }
 
+    const currentStatus = pesanan.status || pesanan.status_pembayaran || "pending";
+
     // 2. Check if cancellation is allowed
     // Only 'pending' or 'waiting_payment' orders can be cancelled publicly
     const cancellableStatuses = ["pending", "waiting_payment"];
-    if (!cancellableStatuses.includes(pesanan.status)) {
+    if (!cancellableStatuses.includes(currentStatus)) {
       return NextResponse.json(
         {
-          message: `Pesanan dengan status '${pesanan.status}' tidak dapat dibatalkan secara mandiri. Silakan hubungi admin.`,
+          message: `Pesanan dengan status '${currentStatus}' tidak dapat dibatalkan secara mandiri. Silakan hubungi admin.`,
         },
         { status: 400 }
       );
     }
 
-    // 3. Perform cancellation
+    // 3. Perform cancellation dynamically (update both columns if they exist to keep them in sync!)
+    const updatePayload: any = {
+      cancelled_at: new Date().toISOString(),
+      cancelled_reason: reason || "Dibatalkan oleh pemesan.",
+    };
+    if (availableCols.includes("status")) {
+      updatePayload.status = "cancelled";
+    }
+    if (availableCols.includes("status_pembayaran")) {
+      updatePayload.status_pembayaran = "cancelled";
+    }
+
     const { data: updated, error: updateError } = await supabase
       .from("pesanan")
-      .update({
-        status: "cancelled",
-        cancelled_at: new Date().toISOString(),
-        cancelled_reason: reason || "Dibatalkan oleh pemesan.",
-      })
+      .update(updatePayload)
       .eq("id", id)
       .select()
       .single();

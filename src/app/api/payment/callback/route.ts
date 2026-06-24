@@ -58,8 +58,23 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Not Found: Booking not found", { status: 404 });
     }
 
+    // Discover columns dynamically to prevent errors on older schemas
+    const { data: sampleBooking } = await supabase.from("pesanan").select("*").limit(1);
+    let availableCols: string[] = [];
+    if (sampleBooking && sampleBooking.length > 0) {
+      availableCols = Object.keys(sampleBooking[0]);
+    } else {
+      availableCols = ["id", "status"];
+    }
+
+    const getBookingStatus = (item: any) => {
+      return item.status || item.status_pembayaran || "";
+    };
+
+    const currentBookingStatus = getBookingStatus(pesanan);
+
     // Check if already processed to avoid duplicate triggers
-    if (pesanan.status === "paid" || pesanan.status === "confirmed") {
+    if (currentBookingStatus === "paid" || currentBookingStatus === "confirmed") {
       console.log(`Order ${pesanan.kode_pesanan} is already marked as paid.`);
       return new NextResponse("OK", { status: 200 });
     }
@@ -70,14 +85,20 @@ export async function POST(req: NextRequest) {
     // resultCode '00' means success in Duitku
     if (resultCode === "00") {
       nextStatus = "paid";
-      updateFields.status = "paid";
       updateFields.paid_at = new Date().toISOString();
       updateFields.payment_method = paymentCode;
       updateFields.payment_method_name = paymentCode;
       updateFields.duitku_reference = reference;
     } else {
       nextStatus = "failed";
-      updateFields.status = "failed";
+    }
+
+    // Set status dynamically (update both if both exist to keep them in sync!)
+    if (availableCols.includes("status")) {
+      updateFields.status = nextStatus;
+    }
+    if (availableCols.includes("status_pembayaran")) {
+      updateFields.status_pembayaran = nextStatus;
     }
 
     // 4. Update order in database

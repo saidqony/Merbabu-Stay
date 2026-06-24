@@ -33,8 +33,9 @@ export default function BookingWidget({
   const [totalHarga, setTotalHarga] = useState(hargaPerMalam);
   const [errorMsg, setErrorMsg] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
-  // Recalculate nights and total price on date change
+  // Recalculate nights, total price, and check availability on date change
   useEffect(() => {
     if (!checkIn || !checkOut) return;
 
@@ -44,6 +45,7 @@ export default function BookingWidget({
     if (coDate <= ciDate) {
       setErrorMsg("Tanggal keluar harus setelah tanggal masuk.");
       setMalamCount(0);
+      setIsAvailable(null);
       return;
     }
 
@@ -64,16 +66,54 @@ export default function BookingWidget({
     }
 
     setTotalHarga(calculatedTotal);
-  }, [checkIn, checkOut, hargaPerMalam, hargaWeekend]);
+
+    // Perform real-time background availability check
+    let isMounted = true;
+    const checkBgAvailability = async () => {
+      setIsChecking(true);
+      try {
+        const res = await fetch("/api/kamar/cek-ketersediaan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ kamar_id: kamarId, check_in: checkIn, check_out: checkOut }),
+        });
+        const data = await res.json();
+        
+        if (isMounted) {
+          if (res.ok) {
+            setIsAvailable(data.available);
+            if (!data.available) {
+              setErrorMsg("Maaf, seluruh unit tipe kamar ini sudah penuh pada tanggal tersebut.");
+            } else {
+              setErrorMsg("");
+            }
+          } else {
+            setIsAvailable(true); // Fallback to true if API fails
+          }
+        }
+      } catch (err) {
+        console.error("Failed background availability check:", err);
+        if (isMounted) setIsAvailable(true);
+      } finally {
+        if (isMounted) setIsChecking(false);
+      }
+    };
+
+    checkBgAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [checkIn, checkOut, hargaPerMalam, hargaWeekend, kamarId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (malamCount <= 0 || errorMsg) return;
+    if (malamCount <= 0 || errorMsg || isAvailable === false) return;
 
     setIsChecking(true);
     
     try {
-      // API check availability
+      // API check availability (double check)
       const res = await fetch("/api/kamar/cek-ketersediaan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,10 +128,11 @@ export default function BookingWidget({
           `/checkout?kamar_id=${kamarId}&check_in=${checkIn}&check_out=${checkOut}&tamu=${jumlahTamu}`
         );
       } else {
-        setErrorMsg("Maaf, kamar tidak tersedia pada tanggal yang Anda pilih.");
+        setIsAvailable(false);
+        setErrorMsg("Maaf, seluruh unit tipe kamar ini sudah penuh pada tanggal tersebut.");
       }
     } catch (err) {
-      // If API fails or not ready yet, proceed to checkout (will validate there anyway)
+      // If API fails, proceed to checkout (will validate there anyway)
       router.push(
         `/checkout?kamar_id=${kamarId}&check_in=${checkIn}&check_out=${checkOut}&tamu=${jumlahTamu}`
       );
@@ -161,10 +202,18 @@ export default function BookingWidget({
           </select>
         </div>
 
-        {/* Error message */}
+        {/* Error / Sold Out message */}
         {errorMsg && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-[#BA1A1A] font-medium">
-            ⚠️ {errorMsg}
+          <div className={`p-4 rounded-xl border text-xs font-semibold flex items-start gap-2.5 transition-all ${
+            isAvailable === false 
+              ? "bg-red-50/80 border-red-200/60 text-red-800 backdrop-blur-sm" 
+              : "bg-amber-50/80 border-amber-200/60 text-amber-800"
+          }`}>
+            <span className="text-sm mt-0.5">{isAvailable === false ? "🚫" : "⚠️"}</span>
+            <div>
+              <p className="font-bold mb-0.5">{isAvailable === false ? "Kamar Penuh / Habis" : "Perhatian"}</p>
+              <p className="opacity-90 leading-relaxed">{errorMsg}</p>
+            </div>
           </div>
         )}
 
@@ -192,8 +241,12 @@ export default function BookingWidget({
         {/* Submit button */}
         <button
           type="submit"
-          disabled={malamCount <= 0 || !!errorMsg || isChecking}
-          className="w-full py-3.5 rounded-xl bg-[#C4956A] hover:bg-[#D4A76A] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold text-base transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+          disabled={malamCount <= 0 || (!!errorMsg && isAvailable === false) || isChecking}
+          className={`w-full py-3.5 rounded-xl font-semibold text-base transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 ${
+            isAvailable === false
+              ? "bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed shadow-none hover:shadow-none"
+              : "bg-[#C4956A] hover:bg-[#D4A76A] text-white disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+          }`}
         >
           {isChecking ? (
             <>
@@ -203,6 +256,8 @@ export default function BookingWidget({
               </svg>
               Memeriksa...
             </>
+          ) : isAvailable === false ? (
+            "Sudah Penuh Dipesan 🚫"
           ) : (
             "Pesan Sekarang"
           )}

@@ -29,7 +29,28 @@ export async function GET(
       return NextResponse.json({ message: "Pesanan tidak ditemukan." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: pesanan });
+    // Normalize status, date, and room name fields for frontend compatibility
+    const normalized = { ...pesanan };
+    
+    if (!normalized.status && normalized.status_pembayaran) {
+      normalized.status = normalized.status_pembayaran;
+    }
+    
+    if (!normalized.check_in && normalized.tgl_checkin) {
+      normalized.check_in = normalized.tgl_checkin;
+    }
+    
+    if (!normalized.check_out && normalized.tgl_checkout) {
+      normalized.check_out = normalized.tgl_checkout;
+    }
+
+    if (normalized.kamar) {
+      if (!normalized.kamar.nama && normalized.kamar.nama_kamar) {
+        normalized.kamar.nama = normalized.kamar.nama_kamar;
+      }
+    }
+
+    return NextResponse.json({ success: true, data: normalized });
   } catch (err: any) {
     console.error("Internal server error in get-pesanan-details:", err);
     return NextResponse.json(
@@ -87,10 +108,11 @@ export async function PUT(
       }
     };
 
-    // Map status dynamically to whatever column is present
+    // Map status dynamically to whatever column is present (update both if both exist to stay in sync!)
     if (availableCols.includes("status")) {
       updatePayload.status = status;
-    } else if (availableCols.includes("status_pembayaran")) {
+    }
+    if (availableCols.includes("status_pembayaran")) {
       updatePayload.status_pembayaran = status;
     }
 
@@ -112,7 +134,7 @@ export async function PUT(
       .from("pesanan")
       .update(updatePayload)
       .eq("id", id)
-      .select()
+      .select("*, kamar(*)")
       .single();
 
     if (error || !updated) {
@@ -133,7 +155,36 @@ export async function PUT(
       console.warn("Failed to insert pesanan_log:", logErr);
     }
 
-    return NextResponse.json({ success: true, data: updated });
+    // Trigger notifications if admin manually marks as PAID
+    if (status === "paid") {
+      try {
+        const { sendInvoiceEmail } = await import("@/lib/resend/client");
+        const { sendTelegramNewOrderAlert } = await import("@/lib/telegram/client");
+
+        console.log(`[Admin Manual] Booking ${updated.kode_pesanan} marked as PAID. Triggering Resend and Telegram...`);
+
+        const emailPromise = sendInvoiceEmail(updated, updated.kamar)
+          .then((s) => console.log(`[Admin Manual] Email invoice sent: ${s}`))
+          .catch((e) => console.error("[Admin Manual] Email notification error:", e));
+
+        const telegramPromise = sendTelegramNewOrderAlert(updated, updated.kamar)
+          .then((s) => console.log(`[Admin Manual] Telegram alert sent: ${s}`))
+          .catch((e) => console.error("[Admin Manual] Telegram notification error:", e));
+
+        // Execute in background
+        Promise.allSettled([emailPromise, telegramPromise]);
+      } catch (notifErr) {
+        console.error("Failed to trigger notifications for admin manual paid:", notifErr);
+      }
+    }
+
+    // Normalize status field for frontend compatibility
+    const normalizedUpdated = { ...updated };
+    if (!normalizedUpdated.status && normalizedUpdated.status_pembayaran) {
+      normalizedUpdated.status = normalizedUpdated.status_pembayaran;
+    }
+
+    return NextResponse.json({ success: true, data: normalizedUpdated });
   } catch (err: any) {
     console.error("Internal server error in update-pesanan:", err);
     return NextResponse.json(
