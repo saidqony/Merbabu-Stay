@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Suite Sunrise Deluxe - MerbabuStay</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#e4bccc",
+                    "on-tertiary-container": "#fffbff",
+                    "primary-container": "#69795e",
+                    "dark-green": "#3D4A35",
+                    "surface-bright": "#fbf9f5",
+                    "inverse-surface": "#30312e",
+                    "forest-green": "#5C6B52",
+                    "on-tertiary-fixed": "#2c1420",
+                    "on-secondary-container": "#7a532e",
+                    "surface-container-high": "#eae8e4",
+                    "secondary-fixed-dim": "#f0bd8f",
+                    "text-secondary": "#6B7560",
+                    "inverse-on-surface": "#f2f0ec",
+                    "bronze": "#8B6F47",
+                    "base-200": "#FAF7F2",
+                    "surface-container-lowest": "#ffffff",
+                    "honey-gold": "#D4A76A",
+                    "surface": "#fbf9f5",
+                    "secondary": "#7d5630",
+                    "tertiary-fixed": "#ffd8e8",
+                    "on-primary-fixed-variant": "#3c4b33",
+                    "tertiary-container": "#8d6b7a",
+                    "surface-tint": "#536349",
+                    "base-300": "#EDE7DB",
+                    "on-tertiary-fixed-variant": "#5b3e4c",
+                    "on-secondary-fixed-variant": "#623f1b",
+                    "outline-variant": "#c5c8be",
+                    "surface-container-highest": "#e4e2de",
+                    "on-tertiary": "#ffffff",
+                    "surface-dim": "#dbdad6",
+                    "primary-fixed-dim": "#baccad",
+                    "tertiary": "#725361",
+                    "primary": "#516147",
+                    "primary-fixed": "#d6e8c8",
+                    "on-primary-container": "#f8ffee",
+                    "on-surface": "#1b1c1a",
+                    "error": "#ba1a1a",
+                    "surface-variant": "#e4e2de",
+                    "secondary-container": "#ffca9b",
+                    "on-surface-variant": "#444840",
+                    "inverse-primary": "#baccad",
+                    "surface-container": "#efeeea",
+                    "on-secondary-fixed": "#2d1600",
+                    "secondary-fixed": "#ffdcbf",
+                    "on-error": "#ffffff",
+                    "on-background": "#1b1c1a",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#111f0b",
+                    "text-primary": "#2D3328",
+                    "on-primary": "#ffffff",
+                    "surface-container-low": "#f5f3ef",
+                    "background": "#fbf9f5",
+                    "error-container": "#ffdad6",
+                    "base-100": "#F5F0E8",
+                    "outline": "#757870"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-sm": "8px",
+                    "gutter": "24px",
+                    "stack-lg": "32px",
+                    "margin-mobile": "20px",
+                    "stack-md": "16px",
+                    "section-gap": "80px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Playfair Display"],
+                    "price-display": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-sm": ["Playfair Display"],
+                    "headline-lg-mobile": ["Playfair Display"],
+                    "headline-lg": ["Playfair Display"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                    "headline-md": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "price-display": ["20px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-sm": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-lg": ["48px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+        }
+        @media (max-width: 768px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md">
+<!-- TopNavBar -->
+<header class="fixed top-0 left-0 w-full h-[80px] bg-base-100/95 backdrop-blur-md dark:bg-on-background/90 shadow-sm dark:shadow-none z-50">
+<nav class="flex justify-between items-center h-full max-w-7xl mx-auto px-margin-desktop">
+<div class="font-headline-sm text-headline-sm text-dark-green dark:text-primary-fixed-dim font-bold">
+                MerbabuStay
+            </div>
+<div class="hidden md:flex space-x-8 items-center">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors duration-300" href="#">Beranda</a>
+<a class="font-label-md text-label-md text-primary font-bold border-b-2 border-primary pb-1" href="#">Kamar</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors duration-300" href="#">Tentang</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-surface-variant hover:text-primary transition-colors duration-300" href="#">Kontak</a>
+<button class="ml-4 bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md hover:opacity-90 transition-all duration-200">Book Now</button>
+</div>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+</header>
+<main class="pt-[100px] pb-section-gap max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop">
+<!-- Breadcrumbs -->
+<nav class="mb-8 flex items-center space-x-2 text-text-secondary font-label-md">
+<a class="hover:text-primary" href="#">Beranda</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<a class="hover:text-primary" href="#">Kamar</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface">Suite Sunrise Deluxe</span>
+</nav>
+<!-- Image Gallery -->
+<section class="gallery-grid h-[500px] mb-stack-lg">
+<div class="relative overflow-hidden rounded-xl shadow-lg">
+<img alt="Suite Sunrise Deluxe Room Main View" class="w-full h-full object-cover hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida/AP1WRLufCktckWg2iMHSwWPk7mWGnlyh6dBhMbr_-wASPC_aZRQSePVBkT8QUE0aqnpUyl5c1ge_YT7QwPkkVAObjsOo_X54tguRdF3PZibD5AnJmvD1G83Ei70DcHr0KZSneF9Qe_OyIj4hLhPK8K-0FSCd6vYzEzEW7wuZSc1s4IE1g9XxRQfRjNpdCyiPxWgdBdK3ChNMxkZD4fC8zOXZIXVWC8GzFjoZR4grPafa6xhuytxHbehUkTl1vSed"/>
+<div class="absolute bottom-4 left-4 bg-dark-green/40 backdrop-blur-sm text-white px-4 py-2 rounded-lg font-label-md flex items-center">
+<span class="material-symbols-outlined mr-2">zoom_out_map</span> Lihat Semua Foto
+                </div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="h-1/2 overflow-hidden rounded-xl shadow-sm">
+<div class="w-full h-full bg-cover bg-center hover:scale-105 transition-transform duration-500 cursor-pointer" data-alt="A close-up high-resolution shot of a luxury hotel bathroom featuring high-end marble textures, golden faucets, and soft warm lighting. The aesthetic is sophisticated and clean, echoing the premium nature of a mountain resort. The colors are dominated by warm whites, creams, and subtle metallic gold accents." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCMfFAkzT4KURg9W9zSCTL7vK_av3tnnJKBF5M6X_3C749gKVXGUgmej4Hz_yjTuzNviFjXZvQ8tg8lFN71X5YHWkkb2btsW7BduZNQslF5sjr67CRbuQaz54KtFbk4IuVz-tERuvgzuy9eKafVQ4nrQvCPpNInoajlBSyQ4up6-GbUAqhTL-Xjne7_kDZ8u6KpjAS54jwFGz1bfn9MVS7NFU1jqJZgh_dtFjHxk9A9N-0U_B4v-aNCQafS-p80WZWgliFtI0Rqa-k1')"></div>
+</div>
+<div class="h-1/2 overflow-hidden rounded-xl shadow-sm">
+<div class="w-full h-full bg-cover bg-center hover:scale-105 transition-transform duration-500 cursor-pointer" data-alt="An elegant private balcony view at sunrise, showcasing a set of high-end wooden outdoor furniture. The background features a breathtaking panorama of mist-covered mountain peaks under a soft orange and pink morning sky. The lighting is ethereal and tranquil, maintaining the resort's premium and serene brand identity." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDNZ9nbiPW8WQJEuUz-aXgSbFcNImQwvmEBPWIbhG3vDB3Kiit-kVpa1EqVmatq73fnk81bt2hJXrMzPXlxuq5fR6_sYk21kYQqEqTtxefwHBFtRGhTjSxeLaKBISHYUWKYCawSdc_QtdUIh-bmWyWchmP53sCMBkTlkmKnJHivT4i7aZp4kEhKLZRdLyuBGMC1Q6DwFv5vZ8RY4nbnA5sSMtZeFqFZIQSww97M5JOrHU8FGbNuRBHLw1fj_zGzOg8xzF1sFHqFGJKS')"></div>
+</div>
+</div>
+</section>
+<!-- Main Content -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+<!-- Left Column: Room Details -->
+<div class="lg:col-span-2">
+<h1 class="font-headline-lg text-headline-lg text-text-primary mb-stack-md">Suite Sunrise Deluxe Room</h1>
+<div class="flex flex-wrap gap-4 mb-stack-lg">
+<span class="px-4 py-1.5 bg-primary/10 text-primary rounded-full font-label-md flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-1">square_foot</span> 45 m²
+                    </span>
+<span class="px-4 py-1.5 bg-secondary/10 text-secondary rounded-full font-label-md flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-1">group</span> 2 Tamu
+                    </span>
+<span class="px-4 py-1.5 bg-honey-gold/10 text-honey-gold rounded-full font-label-md flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-1">mountain_flag</span> Pemandangan Gunung
+                    </span>
+</div>
+<div class="prose max-w-none mb-section-gap">
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                        Rasakan kemewahan yang berpadu sempurna dengan alam di Suite Sunrise Deluxe kami. Terletak di lantai tertinggi, kamar ini dirancang khusus untuk Anda yang mendambakan ketenangan sejati saat matahari terbit menyentuh puncak Gunung Merbabu.
+                    </p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-4">
+                        Setiap sudut ruangan didekorasi dengan material kayu premium dan kain tenun lokal berkualitas tinggi, menciptakan atmosfer hangat dan elegan. Jendela besar dari lantai hingga langit-langit memastikan Anda tidak pernah melewatkan momen dramatis cakrawala pagi dari kenyamanan tempat tidur King-size Anda.
+                    </p>
+</div>
+<!-- Fasilitas -->
+<div class="mb-section-gap">
+<h3 class="font-headline-sm text-headline-sm text-text-primary mb-stack-lg border-b border-base-300 pb-2">Fasilitas Kamar</h3>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
+<div class="flex items-center space-x-3 text-on-surface-variant">
+<div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">wifi</span>
+</div>
+<span class="font-body-md">High-speed WiFi</span>
+</div>
+<div class="flex items-center space-x-3 text-on-surface-variant">
+<div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">king_bed</span>
+</div>
+<span class="font-body-md">King Size Bed</span>
+</div>
+<div class="flex items-center space-x-3 text-on-surface-variant">
+<div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">ac_unit</span>
+</div>
+<span class="font-body-md">Air Conditioning</span>
+</div>
+<div class="flex items-center space-x-3 text-on-surface-variant">
+<div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">water_heater</span>
+</div>
+<span class="font-body-md">Hot Water</span>
+</div>
+<div class="flex items-center space-x-3 text-on-surface-variant">
+<div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">balcony</span>
+</div>
+<span class="font-body-md">Private Balcony</span>
+</div>
+<div class="flex items-center space-x-3 text-on-surface-variant">
+<div class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">coffee_maker</span>
+</div>
+<span class="font-body-md">Coffee Maker</span>
+</div>
+</div>
+</div>
+<!-- Kebijakan -->
+<div class="bg-base-200/50 p-8 rounded-2xl border border-base-300">
+<h3 class="font-headline-sm text-headline-sm text-text-primary mb-4">Kebijakan Pembatalan</h3>
+<ul class="space-y-3 font-body-md text-on-surface-variant">
+<li class="flex items-start">
+<span class="material-symbols-outlined text-primary mr-3 mt-0.5">check_circle</span>
+<span>Gratis pembatalan hingga 48 jam sebelum tanggal check-in.</span>
+</li>
+<li class="flex items-start">
+<span class="material-symbols-outlined text-primary mr-3 mt-0.5">check_circle</span>
+<span>Pembatalan dalam waktu kurang dari 48 jam akan dikenakan biaya 1 malam pertama.</span>
+</li>
+<li class="flex items-start">
+<span class="material-symbols-outlined text-primary mr-3 mt-0.5">check_circle</span>
+<span>Deposit tidak diperlukan untuk pemesanan melalui website resmi.</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Right Column: Booking Widget -->
+<div class="lg:col-span-1">
+<div class="sticky top-[100px] bg-white rounded-2xl shadow-xl shadow-text-primary/5 border border-base-200 overflow-hidden">
+<div class="p-6 bg-dark-green text-white">
+<div class="flex items-end justify-between mb-1">
+<span class="font-label-md opacity-80">Mulai dari</span>
+<span class="font-price-display text-2xl font-bold">Rp 1.450.000<span class="text-sm font-normal"> /malam</span></span>
+</div>
+</div>
+<div class="p-6 space-y-6">
+<!-- Date Pickers -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="font-label-md text-text-secondary block">Check-in</label>
+<div class="relative">
+<input class="w-full bg-base-200 border-none rounded-xl py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer" type="text" value="12 Des 2024"/>
+<span class="material-symbols-outlined absolute right-3 top-3 text-text-secondary pointer-events-none">calendar_month</span>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-text-secondary block">Check-out</label>
+<div class="relative">
+<input class="w-full bg-base-200 border-none rounded-xl py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer" type="text" value="14 Des 2024"/>
+<span class="material-symbols-outlined absolute right-3 top-3 text-text-secondary pointer-events-none">calendar_month</span>
+</div>
+</div>
+</div>
+<!-- Guest Select -->
+<div class="space-y-2">
+<label class="font-label-md text-text-secondary block">Tamu</label>
+<select class="w-full bg-base-200 border-none rounded-xl py-3 px-4 text-on-surface focus:ring-2 focus:ring-primary/20 appearance-none">
+<option>2 Dewasa</option>
+<option>2 Dewasa, 1 Anak</option>
+<option>1 Dewasa</option>
+</select>
+</div>
+<!-- Price Breakdown -->
+<div class="pt-4 border-t border-base-300 space-y-3">
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span>Rp 1.450.000 x 2 Malam</span>
+<span>Rp 2.900.000</span>
+</div>
+<div class="flex justify-between font-body-md text-on-surface-variant">
+<span>Biaya Layanan &amp; Pajak</span>
+<span>Rp 290.000</span>
+</div>
+<div class="flex justify-between font-headline-sm text-text-primary pt-2">
+<span>Total</span>
+<span>Rp 3.190.000</span>
+</div>
+</div>
+<!-- CTA -->
+<button class="w-full bg-secondary hover:bg-bronze text-white font-bold py-4 rounded-xl shadow-lg shadow-secondary/20 transition-all duration-300 active:scale-95">
+                            Konfirmasi Pemesanan
+                        </button>
+<p class="text-center font-label-md text-text-secondary italic">
+                            Tanpa biaya tersembunyi
+                        </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Similar Rooms Section -->
+<section class="mt-section-gap">
+<h2 class="font-headline-md text-headline-md text-text-primary mb-stack-lg">Kamar Serupa</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-base-300/50">
+<div class="h-64 overflow-hidden relative">
+<div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-primary font-label-md">Best Seller</div>
+<div class="w-full h-full bg-cover bg-center group-hover:scale-110 transition-transform duration-700" data-alt="A cozy and modern mountain lodge room featuring natural wooden walls, plush white bedding, and floor-to-ceiling windows overlooking a lush evergreen forest. The lighting is warm and golden, creating a snug and inviting atmosphere typical of a high-end retreat. Earthy tones like cedar, moss green, and soft ivory dominate the scene." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBujCusptJRsTCvnMtPyFKSiTF6Nf5idOtiUTD13GA12vbqbbNHmS9i6GLfV6dvbtBm0Uyu5VS8lrKmKXEf1a8boxNgFgLh23rbFsj1oTdpW8wSFLtFekXZTJ0QCKrDh13Zqjaawnna3yuyFhokxbkRA-X5jiM-WjGtujG1W_H8Z3oeBBhWU0QamHKVu58tLGvhQQKYxP3TZjJ44aSzIaQdNYq9n_lW2Xm6NcGw8dfikNR660enhI0LjIyAq16c_bNVb5olISZvztkw')"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline-sm text-headline-sm mb-2 group-hover:text-primary transition-colors">Garden View Suite</h4>
+<div class="flex items-center text-text-secondary font-label-md mb-4">
+<span class="material-symbols-outlined text-[18px] mr-1">group</span> 2 Tamu
+                            <span class="mx-2">•</span>
+<span class="material-symbols-outlined text-[18px] mr-1">square_foot</span> 40 m²
+                        </div>
+<div class="flex justify-between items-end">
+<div class="font-price-display text-text-primary">Rp 1.150.000 <span class="text-sm font-normal opacity-70">/malam</span></div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-base-300/50">
+<div class="h-64 overflow-hidden relative">
+<div class="w-full h-full bg-cover bg-center group-hover:scale-110 transition-transform duration-700" data-alt="A spacious family-oriented villa room within a boutique mountain resort. The space is bright and airy, featuring two large beds, high-quality artisanal furniture, and a private stone fireplace. Large windows reveal a panoramic view of the mountain valley during a clear afternoon. The style is rustic yet refined, with colors like stone grey, deep oak, and forest green." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAicrXEqquRTvaD-clu9W3s-caM6rNGKia4H5DuMns287gD2aGlNQMGq9_DxGQizufEIsddz-452pMqKsZBvKHw-WZL7UklNA71-bz7Un86NUfPqzBBBgdZJPqE2iss0fQmBmk25PaXdA4kjLFv7f-5qOo0hgZhcpiluLc8ymdyUGzo-VmlRvzUfy1FwWaR9-06Jp6X0El5Ee8u0L0ZB3XGiXcEIIVsa3pTtwe_l9duZ6epqB7sY9p8n2nPFDqqijxgB8wWFmWgVxB1')"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline-sm text-headline-sm mb-2 group-hover:text-primary transition-colors">Family Mountain Villa</h4>
+<div class="flex items-center text-text-secondary font-label-md mb-4">
+<span class="material-symbols-outlined text-[18px] mr-1">group</span> 4 Tamu
+                            <span class="mx-2">•</span>
+<span class="material-symbols-outlined text-[18px] mr-1">square_foot</span> 85 m²
+                        </div>
+<div class="flex justify-between items-end">
+<div class="font-price-display text-text-primary">Rp 2.450.000 <span class="text-sm font-normal opacity-70">/malam</span></div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-base-300/50">
+<div class="h-64 overflow-hidden relative">
+<div class="absolute top-4 right-4 z-10 bg-honey-gold text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Limited</div>
+<div class="w-full h-full bg-cover bg-center group-hover:scale-110 transition-transform duration-700" data-alt="An ultra-exclusive penthouse suite interior at a boutique mountain resort. The design features minimalist luxury with a private indoor infinity pool that seems to merge with the mountains outside. The lighting is moody and artistic, highlighting the sleek lines of the contemporary architecture. The color palette is cool and sophisticated with slate, charcoal, and warm amber light." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDTDvw6djlp-xw3wZzUrwzEN1XezHcrUU9tF_gymfswnmt1MyjBmbffURMpAXf6QKHuQJaEGwkdlYChdKZX92HnnkvWl43kNttdRuVrk3CdSxfdkIHlFQqDm_M3oS7EnXOlBMRATHplTOmxFdM3MfQ8n3vX64Y8yDBMttVicUHJmiwg9sxEDqmHFRP7VtOJMlzAGgXKzkA-kSdWdYQXagXr5k-5yK7n1lQ6O1eMg_EdBPECgr90ua1H1av1l36MgQ_VVgrrTTgT0pDI')"></div>
+</div>
+<div class="p-6">
+<h4 class="font-headline-sm text-headline-sm mb-2 group-hover:text-primary transition-colors">Exclusive Ridge Studio</h4>
+<div class="flex items-center text-text-secondary font-label-md mb-4">
+<span class="material-symbols-outlined text-[18px] mr-1">group</span> 2 Tamu
+                            <span class="mx-2">•</span>
+<span class="material-symbols-outlined text-[18px] mr-1">square_foot</span> 38 m²
+                        </div>
+<div class="flex justify-between items-end">
+<div class="font-price-display text-text-primary">Rp 1.300.000 <span class="text-sm font-normal opacity-70">/malam</span></div>
+<span class="material-symbols-outlined text-primary group-hover:translate-x-2 transition-transform">arrow_forward</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-dark-green dark:bg-on-background text-surface py-section-gap">
+<div class="max-w-7xl mx-auto px-margin-desktop">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-stack-lg">
+<div class="col-span-1 md:col-span-1">
+<div class="font-headline-md text-headline-md text-surface mb-6">MerbabuStay</div>
+<p class="font-body-md text-surface-variant opacity-80 leading-relaxed">
+                        Tempat di mana kenyamanan bertemu dengan keagungan alam Merbabu. Pengalaman menginap yang tak terlupakan menanti Anda.
+                    </p>
+</div>
+<div>
+<h4 class="font-label-md text-surface font-bold mb-6 uppercase tracking-widest">Navigasi</h4>
+<ul class="space-y-4 font-body-md">
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Beranda</a></li>
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Kamar</a></li>
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Tentang</a></li>
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Kontak</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-surface font-bold mb-6 uppercase tracking-widest">Bantuan</h4>
+<ul class="space-y-4 font-body-md">
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Support Center</a></li>
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Privacy Policy</a></li>
+<li><a class="text-surface-variant opacity-80 hover:text-secondary-fixed transition-colors" href="#">Syarat &amp; Ketentuan</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-surface font-bold mb-6 uppercase tracking-widest">Ikuti Kami</h4>
+<div class="flex space-x-4">
+<a class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">public</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</a>
+</div>
+</div>
+</div>
+<div class="pt-8 border-t border-white/10 text-center font-body-md text-surface-variant opacity-60">
+                © 2024 MerbabuStay. All rights reserved.
+            </div>
+</div>
+</footer>
+<script>
+        // Simple Interaction logic for price calculation simulation
+        document.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('change', () => {
+                // In a real app, this would update price based on logic
+                console.log('Update booking details...');
+            });
+        });
+
+        // Hover animation for booking widget
+        const bookingBtn = document.querySelector('button.w-full.bg-secondary');
+        bookingBtn.addEventListener('mousedown', () => {
+            bookingBtn.classList.add('scale-95');
+        });
+        bookingBtn.addEventListener('mouseup', () => {
+            bookingBtn.classList.remove('scale-95');
+        });
+    </script>
+</body></html>
