@@ -32,10 +32,10 @@ export default function AdminLoginPage() {
       });
 
       if (error) {
-        // Fallback check: Allow MBS demo login if DB connection is empty or simulated
+        // Fallback check: Allow MBS admin login if DB connection is empty or simulated
         if (
-          (email === "admin@merbabustay.com" && password === "merbabu123") ||
-          (email === "admin@merbabustay.id" && password === "merbabu123")
+          (email === "saidqony@gmail.com" && password === "saidqonyadmin321") ||
+          (email === "admin@merbabustay.com" && password === "merbabu123")
         ) {
           // Store simulated admin token
           localStorage.setItem("mbs_admin_logged", "true");
@@ -49,11 +49,14 @@ export default function AdminLoginPage() {
       }
     } catch (err) {
       // Fallback check
-      if (email === "admin@merbabustay.com" && password === "merbabu123") {
+      if (
+        (email === "saidqony@gmail.com" && password === "saidqonyadmin321") ||
+        (email === "admin@merbabustay.com" && password === "merbabu123")
+      ) {
         localStorage.setItem("mbs_admin_logged", "true");
         router.push("/admin/dashboard");
       } else {
-        setErrorMsg("Koneksi gagal. Silakan gunakan kredensial demo admin@merbabustay.com / merbabu123");
+        setErrorMsg("Koneksi gagal. Silakan gunakan kredensial admin Anda.");
       }
     } finally {
       setLoading(false);
@@ -88,7 +91,7 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@merbabustay.com"
+              placeholder="saidqony@gmail.com"
               required
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#EDE7DB] text-sm text-[#2D3328] outline-none focus:border-[#7A8B6F] focus:ring-1 focus:ring-[#7A8B6F]/30 transition-all"
             />
@@ -131,7 +134,7 @@ export default function AdminLoginPage() {
 
         <div className="pt-4 border-t border-[#EDE7DB] text-center">
           <p className="text-[11px] text-[#6B7560]">
-            Demo Login: <strong>admin@merbabustay.com</strong> / <strong>merbabu123</strong>
+            Kredensial Admin: <strong>saidqony@gmail.com</strong> / <strong>saidqonyadmin321</strong>
           </p>
         </div>
       </div>
