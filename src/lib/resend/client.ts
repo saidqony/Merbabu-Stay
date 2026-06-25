@@ -111,6 +111,11 @@ export async function sendInvoiceEmail(pesanan: Pesanan, kamar: Kamar): Promise<
     </div>
   `;
 
+  // If we are in Sandbox mode (using onboarding@resend.dev), Resend only allows sending to the registered owner (saidqony@gmail.com)
+  const isSandbox = FROM_EMAIL.includes("onboarding@resend.dev");
+  const recipientEmail = isSandbox ? "saidqony@gmail.com" : pesanan.email;
+  const finalSubject = isSandbox ? `[Sandbox Test untuk ${pesanan.email}] ${subject}` : subject;
+
   try {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -120,8 +125,8 @@ export async function sendInvoiceEmail(pesanan: Pesanan, kamar: Kamar): Promise<
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
-        to: [pesanan.email],
-        subject: subject,
+        to: [recipientEmail],
+        subject: finalSubject,
         html: htmlContent,
       }),
     });
