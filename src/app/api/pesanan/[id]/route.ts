@@ -163,16 +163,15 @@ export async function PUT(
 
         console.log(`[Admin Manual] Booking ${updated.kode_pesanan} marked as PAID. Triggering Resend and Telegram...`);
 
-        const emailPromise = sendInvoiceEmail(updated, updated.kamar)
-          .then((s) => console.log(`[Admin Manual] Email invoice sent: ${s}`))
-          .catch((e) => console.error("[Admin Manual] Email notification error:", e));
-
-        const telegramPromise = sendTelegramNewOrderAlert(updated, updated.kamar)
-          .then((s) => console.log(`[Admin Manual] Telegram alert sent: ${s}`))
-          .catch((e) => console.error("[Admin Manual] Telegram notification error:", e));
-
-        // Execute in background
-        Promise.allSettled([emailPromise, telegramPromise]);
+        // Await the notifications to ensure Vercel does not terminate the function mid-flight
+        await Promise.allSettled([
+          sendInvoiceEmail(updated, updated.kamar)
+            .then((s) => console.log(`[Admin Manual] Email invoice sent: ${s}`))
+            .catch((e) => console.error("[Admin Manual] Email notification error:", e)),
+          sendTelegramNewOrderAlert(updated, updated.kamar)
+            .then((s) => console.log(`[Admin Manual] Telegram alert sent: ${s}`))
+            .catch((e) => console.error("[Admin Manual] Telegram notification error:", e))
+        ]);
       } catch (notifErr) {
         console.error("Failed to trigger notifications for admin manual paid:", notifErr);
       }

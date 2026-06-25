@@ -240,11 +240,11 @@ export async function POST(req: NextRequest) {
       console.error("Failed to update booking with payment details:", updateError);
     }
 
-    // Trigger pending invoice email in background
+    // Trigger pending invoice email
     if (finalPesanan) {
       try {
         const { sendInvoiceEmail } = require("@/lib/resend/client");
-        sendInvoiceEmail(finalPesanan, room)
+        await sendInvoiceEmail(finalPesanan, room)
           .then((s: boolean) => console.log(`[Checkout] Pending invoice email sent: ${s}`))
           .catch((e: any) => console.error("[Checkout] Failed to send pending invoice email:", e));
       } catch (notifErr) {

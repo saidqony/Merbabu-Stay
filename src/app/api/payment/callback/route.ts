@@ -129,16 +129,15 @@ export async function POST(req: NextRequest) {
     if (nextStatus === "paid") {
       console.log(`Payment success for ${pesanan.kode_pesanan}. Triggering emails and Telegram notifications.`);
       
-      const emailPromise = sendInvoiceEmail(updatedPesanan, pesanan.kamar)
-        .then((s) => console.log(`Email invoice sent: ${s}`))
-        .catch((e) => console.error("Email notification error:", e));
-
-      const telegramPromise = sendTelegramNewOrderAlert(updatedPesanan, pesanan.kamar)
-        .then((s) => console.log(`Telegram alert sent: ${s}`))
-        .catch((e) => console.error("Telegram notification error:", e));
-
-      // Do not block the webhook response, let them run in background
-      Promise.allSettled([emailPromise, telegramPromise]);
+      // Await notifications so Vercel keeps the serverless container alive until they complete
+      await Promise.allSettled([
+        sendInvoiceEmail(updatedPesanan, pesanan.kamar)
+          .then((s) => console.log(`Email invoice sent: ${s}`))
+          .catch((e) => console.error("Email notification error:", e)),
+        sendTelegramNewOrderAlert(updatedPesanan, pesanan.kamar)
+          .then((s) => console.log(`Telegram alert sent: ${s}`))
+          .catch((e) => console.error("Telegram notification error:", e))
+      ]);
     }
 
     // Duitku expects 'OK' as plain text response to acknowledge successful callback
