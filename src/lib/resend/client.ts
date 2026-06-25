@@ -1,13 +1,11 @@
 import type { Pesanan, Kamar } from "@/types";
 import { formatRupiah, formatTanggal } from "@/lib/utils";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-// Allow customizing the sender email via environment variables.
-// NOTE: Resend requires you to verify your domain (e.g., merbabustay.id) before you can send from it.
-// If your domain is not verified, you must use "onboarding@resend.dev" for testing and can only send to your own registered email.
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "MerbabuStay <onboarding@resend.dev>";
-
 export async function sendInvoiceEmail(pesanan: Pesanan, kamar: Kamar): Promise<boolean> {
+  // Read env vars fresh on every call — do NOT read at module scope on serverless
+  const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+  const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "MerbabuStay <onboarding@resend.dev>";
+
   if (!RESEND_API_KEY) {
     console.warn("RESEND_API_KEY is not set. Skipping invoice email...");
     return false;

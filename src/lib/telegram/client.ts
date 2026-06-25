@@ -1,10 +1,11 @@
 import type { Pesanan, Kamar } from "@/types";
 import { formatRupiah, formatTanggal } from "@/lib/utils";
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
-
 export async function sendTelegramNewOrderAlert(pesanan: Pesanan, kamar: Kamar): Promise<boolean> {
+  // Read env vars fresh on every call — do NOT read at module scope on serverless
+  const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+  const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "";
+
   if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
     console.warn("Telegram bot token or chat ID is not set. Skipping Telegram notification...");
     return false;
