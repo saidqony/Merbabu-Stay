@@ -192,10 +192,43 @@ export async function GET(req: NextRequest) {
     // 6. Send Telegram Admin Notification
     let telegramSent = false;
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      let guestDetailsMsg = "";
+      if (bookings && bookings.length > 0) {
+        guestDetailsMsg = `📋 *Daftar Kedatangan Tamu H-1:*\n\n`;
+        bookings.forEach((b: any, index: number) => {
+          const pAny = b as any;
+          const kAny = b.kamar as any;
+          const guestName = pAny.nama_lengkap || "Tamu";
+          const rawPhone = pAny.no_hp || "";
+          // Format phone to clean numbers only, if starts with 0 convert to 62
+          let cleanPhone = rawPhone.replace(/[^0-9]/g, "");
+          if (cleanPhone.startsWith("0")) {
+            cleanPhone = "62" + cleanPhone.substring(1);
+          }
+          const displayPhone = rawPhone || "-";
+          const roomName = kAny?.nama_kamar || kAny?.nama || "Kamar";
+          const nights = pAny.jumlah_malam || 1;
+          const guests = pAny.jumlah_tamu || 1;
+          const code = pAny.kode_pesanan || pAny.id.substring(0, 8).toUpperCase();
+          const email = pAny.email || "-";
+          
+          const waLink = cleanPhone ? `[${displayPhone}](https://wa.me/${cleanPhone})` : "-";
+          
+          guestDetailsMsg += `${index + 1}. *${guestName}* (Kode: \`${code}\`)\n` +
+            `   🚪 Kamar: *${roomName}*\n` +
+            `   👥 Jumlah Tamu: *${guests} orang* · 🌙 *${nights} malam*\n` +
+            `   📞 No. HP: ${waLink}\n` +
+            `   📧 Email: \`${email}\`\n\n`;
+        });
+      } else {
+        guestDetailsMsg = `📭 *Tidak ada kedatangan tamu besok.*\n\n`;
+      }
+
       const telegramMsg = `🔔 *[PRE-ARRIVAL CRON] Laporan Harian*\n` +
         `📅 *Tanggal Check-in:* ${formatTanggal(targetDateStr)}\n` +
-        `👥 *Tamu Siap Kedatangan:* ${totalBookings} orang\n` +
+        `👥 *Tamu Siap Kedatangan:* ${totalBookings} booking\n` +
         `📧 *Email Panduan Terkirim:* ${sentCount} email\n\n` +
+        guestDetailsMsg +
         `_Sistem otomatis menyapa tamu H-1 kedatangan._`;
 
       try {

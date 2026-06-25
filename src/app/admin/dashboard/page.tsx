@@ -7,8 +7,16 @@ import { formatRupiah, formatTanggalShort } from "@/lib/utils";
 export default function AdminDashboardPage() {
   const router = useRouter();
   
-  // Tabs: "bookings" | "rooms"
-  const [activeTab, setActiveTab] = useState<"bookings" | "rooms">("bookings");
+  // Tabs: "bookings" | "rooms" | "reports"
+  const [activeTab, setActiveTab] = useState<"bookings" | "rooms" | "reports">("bookings");
+
+  // Reports States
+  const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1); // 1-12
+  const [reportYear, setReportYear] = useState<number>(new Date().getFullYear());
+  const [reportData, setReportData] = useState<any | null>(null);
+  const [loadingReport, setLoadingReport] = useState<boolean>(false);
+  const [triggeringAlerts, setTriggeringAlerts] = useState<boolean>(false);
+  const [reportError, setReportError] = useState<string>("");
 
   // Loading States
   const [loading, setLoading] = useState(true);
@@ -160,6 +168,84 @@ export default function AdminDashboardPage() {
       }
     } catch (err) {
       console.error("Failed to refresh bookings:", err);
+    }
+  };
+
+  const fetchMonthlyReport = async (m: number, y: number) => {
+    setLoadingReport(true);
+    setReportError("");
+    try {
+      const res = await fetch(`/api/admin/cron/laporan-bulanan?secret=test_secret_bypass&month=${m}&year=${y}&only_data=true`);
+      const data = await res.json();
+      if (data.success) {
+        setReportData(data);
+      } else {
+        setReportError(data.message || "Gagal memuat data laporan.");
+      }
+    } catch (err: any) {
+      setReportError(err.message || "Terjadi kesalahan koneksi.");
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "reports" && !reportData && !loadingReport) {
+      fetchMonthlyReport(reportMonth, reportYear);
+    }
+  }, [activeTab]);
+
+  const handleDownloadCSV = (report: any) => {
+    if (!report || !report.data) return;
+    const rData = report.data;
+    
+    let csv = "sep=,\n";
+    csv += `"LAPORAN KEUANGAN BULANAN - MERBABUSTAY"\n`;
+    csv += `"Periode","${report.periode || ""}"\n`;
+    csv += `"Tanggal Cetak","${new Date().toLocaleDateString("id-ID")}"\n\n`;
+    
+    csv += `"RINGKASAN EKSEKUTIF"\n`;
+    csv += `"Metrik","Nilai"\n`;
+    csv += `"Total Pendapatan (IDR)",${rData.total_pendapatan || 0}\n`;
+    csv += `"Tingkat Okupansi","${rData.tingkat_okupansi || "0%"}"\n`;
+    csv += `"Total Malam Terjual (malam)",${rData.malam_terjual || 0}\n`;
+    csv += `"Total Transaksi Lunas",${rData.total_transaksi || 0}\n\n`;
+    
+    csv += `"PERFORMA PER UNIT KAMAR"\n`;
+    csv += `"Nama Kamar","Tipe","Malam Terjual","Total Pendapatan (IDR)"\n`;
+    if (rData.rincian_kamar) {
+      Object.values(rData.rincian_kamar).forEach((rp: any) => {
+        const cleanName = rp.name.replace(/"/g, '""');
+        csv += `"${cleanName}","${rp.type}",${rp.nights},${rp.revenue}\n`;
+      });
+    }
+    
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const cleanPeriode = (report.periode || "Laporan").replace(/\s+/g, "_");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Laporan_Keuangan_MerbabuStay_${cleanPeriode}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSendReportAlerts = async () => {
+    setTriggeringAlerts(true);
+    try {
+      const res = await fetch(`/api/admin/cron/laporan-bulanan?secret=test_secret_bypass&month=${reportMonth}&year=${reportYear}`);
+      const data = await res.json();
+      if (data.success) {
+        alert(`Sukses! Laporan bulanan periode ${data.periode} telah dikirim ke Telegram dan email.`);
+      } else {
+        alert(`Gagal mengirim laporan: ${data.message}`);
+      }
+    } catch (err: any) {
+      alert(`Gagal menghubungi server: ${err.message}`);
+    } finally {
+      setTriggeringAlerts(false);
     }
   };
 
@@ -583,10 +669,10 @@ export default function AdminDashboardPage() {
       </header>
 
       {/* Tab Switched Navigation */}
-      <div className="flex border-b border-[#EDE7DB] px-6 py-1 bg-white gap-6 shadow-sm">
+      <div className="flex border-b border-[#EDE7DB] px-6 py-1 bg-white gap-6 shadow-sm overflow-x-auto">
         <button
           onClick={() => setActiveTab("bookings")}
-          className={`py-3.5 text-xs md:text-sm font-bold transition-all border-b-2 tracking-wide ${
+          className={`py-3.5 text-xs md:text-sm font-bold transition-all border-b-2 tracking-wide flex-shrink-0 ${
             activeTab === "bookings"
               ? "border-[#5C6B52] text-[#5C6B52]"
               : "border-transparent text-[#8C9A86] hover:text-[#5C6B52]"
@@ -596,13 +682,23 @@ export default function AdminDashboardPage() {
         </button>
         <button
           onClick={() => setActiveTab("rooms")}
-          className={`py-3.5 text-xs md:text-sm font-bold transition-all border-b-2 tracking-wide ${
+          className={`py-3.5 text-xs md:text-sm font-bold transition-all border-b-2 tracking-wide flex-shrink-0 ${
             activeTab === "rooms"
               ? "border-[#5C6B52] text-[#5C6B52]"
               : "border-transparent text-[#8C9A86] hover:text-[#5C6B52]"
           }`}
         >
           🏡 MANAJEMEN KAMAR (CMS)
+        </button>
+        <button
+          onClick={() => setActiveTab("reports")}
+          className={`py-3.5 text-xs md:text-sm font-bold transition-all border-b-2 tracking-wide flex-shrink-0 ${
+            activeTab === "reports"
+              ? "border-[#5C6B52] text-[#5C6B52]"
+              : "border-transparent text-[#8C9A86] hover:text-[#5C6B52]"
+          }`}
+        >
+          📊 LAPORAN KEUANGAN
         </button>
       </div>
 
@@ -929,6 +1025,176 @@ export default function AdminDashboardPage() {
                 </div>
               )}
             </div>
+          </>
+        )}
+
+        {/* TAB 3: MONTHLY FINANCIAL REPORTS */}
+        {activeTab === "reports" && (
+          <>
+            {/* Control Bar */}
+            <div className="bg-white rounded-2xl p-6 border border-[#EDE7DB] shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#2D3328] uppercase tracking-wider mb-1">Pilih Bulan</label>
+                  <select
+                    value={reportMonth}
+                    onChange={(e) => setReportMonth(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl border border-[#EDE7DB] text-sm text-[#2D3328] bg-white outline-none focus:border-[#7A8B6F] transition-all font-semibold"
+                  >
+                    {[
+                      { v: 1, l: "Januari" },
+                      { v: 2, l: "Februari" },
+                      { v: 3, l: "Maret" },
+                      { v: 4, l: "April" },
+                      { v: 5, l: "Mei" },
+                      { v: 6, l: "Juni" },
+                      { v: 7, l: "Juli" },
+                      { v: 8, l: "Agustus" },
+                      { v: 9, l: "September" },
+                      { v: 10, l: "Oktober" },
+                      { v: 11, l: "November" },
+                      { v: 12, l: "Desember" }
+                    ].map((m) => (
+                      <option key={m.v} value={m.v}>{m.l}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[#2D3328] uppercase tracking-wider mb-1">Pilih Tahun</label>
+                  <select
+                    value={reportYear}
+                    onChange={(e) => setReportYear(Number(e.target.value))}
+                    className="px-3 py-2 rounded-xl border border-[#EDE7DB] text-sm text-[#2D3328] bg-white outline-none focus:border-[#7A8B6F] transition-all font-semibold"
+                  >
+                    {[2025, 2026, 2027, 2028].map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="self-end">
+                  <button
+                    onClick={() => fetchMonthlyReport(reportMonth, reportYear)}
+                    disabled={loadingReport}
+                    className="px-5 py-2.5 rounded-xl bg-[#5C6B52] hover:bg-[#3D4A35] text-white text-xs md:text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:bg-gray-300"
+                  >
+                    {loadingReport ? "Memuat..." : "🔍 Tampilkan Laporan"}
+                  </button>
+                </div>
+              </div>
+
+              {reportData && !loadingReport && (
+                <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                  <button
+                    onClick={handleSendReportAlerts}
+                    disabled={triggeringAlerts}
+                    className="w-full md:w-auto px-4 py-2.5 rounded-xl border border-[#7A8B6F] hover:bg-[#FAF7F2] text-[#5C6B52] text-xs md:text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                  >
+                    ✉️ {triggeringAlerts ? "Mengirim..." : "Kirim Email & Telegram"}
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadCSV(reportData)}
+                    className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-[#C4956A] hover:bg-[#A37B55] text-white text-xs md:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-1.5"
+                  >
+                    📥 Unduh Excel (CSV)
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Error Message */}
+            {reportError && (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-100 text-sm text-[#BA1A1A] font-semibold">
+                ⚠️ Gagal mengambil laporan: {reportError}
+              </div>
+            )}
+
+            {/* Loading State */}
+            {loadingReport && (
+              <div className="bg-white rounded-2xl border border-[#EDE7DB] p-12 text-center shadow-sm">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#5C6B52] mx-auto mb-4"></div>
+                <p className="text-sm text-[#6B7560] font-medium">Sedang memformulasikan laporan keuangan Anda...</p>
+              </div>
+            )}
+
+            {/* Main Report Content */}
+            {!loadingReport && reportData && (
+              <div className="space-y-6">
+                
+                {/* Executive Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Revenue Card */}
+                  <div className="bg-white p-5 rounded-2xl border-l-4 border-l-[#C4956A] border border-[#EDE7DB] shadow-sm">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#7A8B6F] block">Total Pendapatan</span>
+                    <h2 className="text-2xl font-black text-[#C4956A] mt-1.5">{formatRupiah(reportData.data?.total_pendapatan || 0)}</h2>
+                    <span className="text-[11px] text-[#6B7560] mt-1 block">Dari transaksi berstatus Lunas</span>
+                  </div>
+
+                  {/* Occupancy Card */}
+                  <div className="bg-white p-5 rounded-2xl border-l-4 border-l-[#5C6B52] border border-[#EDE7DB] shadow-sm">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#7A8B6F] block">Tingkat Okupansi</span>
+                    <h2 className="text-2xl font-black text-[#5C6B52] mt-1.5">{reportData.data?.tingkat_okupansi || "0%"}</h2>
+                    <span className="text-[11px] text-[#6B7560] mt-1 block">Rata-rata hunian homestay</span>
+                  </div>
+
+                  {/* Nights Sold Card */}
+                  <div className="bg-white p-5 rounded-2xl border-l-4 border-l-[#7A8B6F] border border-[#EDE7DB] shadow-sm">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#7A8B6F] block">Malam Terjual</span>
+                    <h2 className="text-2xl font-black text-[#2D3328] mt-1.5">{reportData.data?.malam_terjual || 0} Malam</h2>
+                    <span className="text-[11px] text-[#6B7560] mt-1 block">Akumulasi durasi menginap</span>
+                  </div>
+
+                  {/* Total Bookings Card */}
+                  <div className="bg-white p-5 rounded-2xl border-l-4 border-l-gray-400 border border-[#EDE7DB] shadow-sm">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#7A8B6F] block">Transaksi Lunas</span>
+                    <h2 className="text-2xl font-black text-[#2D3328] mt-1.5">{reportData.data?.total_transaksi || 0} Pesanan</h2>
+                    <span className="text-[11px] text-[#6B7560] mt-1 block">Jumlah tamu yang terlayani</span>
+                  </div>
+                </div>
+
+                {/* Rooms Contribution Table */}
+                <div className="bg-white rounded-2xl border border-[#EDE7DB] shadow-sm overflow-hidden">
+                  <div className="p-5 border-b border-[#EDE7DB] bg-[#FAF7F2]">
+                    <h3 className="font-[family-name:var(--font-playfair)] text-base md:text-lg font-bold text-[#3D4A35]">
+                      🚪 Performa & Kontribusi Pendapatan per Kamar
+                    </h3>
+                    <p className="text-xs text-[#6B7560] mt-0.5">
+                      Rincian performa setiap tipe kamar di MerbabuStay untuk periode {reportData.periode}.
+                    </p>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50/80 border-b border-[#EDE7DB] text-[#5C6B52] font-bold text-xs uppercase tracking-wider">
+                          <th className="p-4">Nama Kamar / Unit</th>
+                          <th className="p-4 text-center">Tipe Kamar</th>
+                          <th className="p-4 text-center">Malam Terjual</th>
+                          <th className="p-4 text-right">Total Pendapatan (IDR)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#EDE7DB]/60">
+                        {reportData.data?.rincian_kamar && Object.values(reportData.data.rincian_kamar).map((rp: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-gray-50/40 transition-colors">
+                            <td className="p-4 font-bold text-[#2D3328]">{rp.name}</td>
+                            <td className="p-4 text-center">
+                              <span className="px-2 py-0.5 rounded bg-[#FAF7F2] text-[#5C6B52] border border-[#EDE7DB] text-xs font-semibold uppercase font-mono">
+                                {rp.type}
+                              </span>
+                            </td>
+                            <td className="p-4 text-center font-bold text-[#5C6B52]">{rp.nights} malam</td>
+                            <td className="p-4 text-right font-black text-[#C4956A]">{formatRupiah(rp.revenue)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            )}
           </>
         )}
       </main>

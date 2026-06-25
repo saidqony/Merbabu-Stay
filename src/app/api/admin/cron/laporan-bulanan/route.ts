@@ -233,9 +233,11 @@ export async function GET(req: NextRequest) {
       </div>
     `;
 
+    const onlyData = req.nextUrl.searchParams.get("only_data") === "true";
+
     // 9. Send Telegram Bot Notification (Async)
     let telegramSent = false;
-    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+    if (!onlyData && TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
       try {
         const telegramRes = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: "POST",
@@ -254,7 +256,7 @@ export async function GET(req: NextRequest) {
 
     // 10. Send Email Notification via Resend (Async) with Excel Attachment
     let emailSent = false;
-    if (RESEND_API_KEY) {
+    if (!onlyData && RESEND_API_KEY) {
       try {
         // Generate CSV Content for Excel
         let csvContent = "sep=,\n"; // Excel helper for separator

@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="saidqony@gmail.com"
+              placeholder="admin@merbabustay.com"
               required
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#EDE7DB] text-sm text-[#2D3328] outline-none focus:border-[#7A8B6F] focus:ring-1 focus:ring-[#7A8B6F]/30 transition-all"
             />
@@ -133,8 +133,8 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="pt-4 border-t border-[#EDE7DB] text-center">
-          <p className="text-[11px] text-[#6B7560]">
-            Kredensial Admin: <strong>saidqony@gmail.com</strong> / <strong>saidqonyadmin321</strong>
+          <p className="text-[10px] text-[#8C9A86] italic">
+            Panel dilindungi enkripsi SSL aman.
           </p>
         </div>
       </div>
