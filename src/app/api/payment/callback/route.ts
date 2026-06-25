@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    console.log("[Callback] Received Duitku callback:", JSON.stringify(body));
+
     const {
       merchantCode,
       amount,
@@ -35,16 +37,18 @@ export async function POST(req: NextRequest) {
 
     // 1. Validate mandatory fields
     if (!merchantCode || !amount || !merchantOrderId || !signature) {
-      console.warn("Duitku callback missing mandatory fields:", body);
+      console.warn("[Callback] Missing mandatory fields:", body);
       return new NextResponse("Bad Request: Missing fields", { status: 400 });
     }
 
     // 2. Verify signature to prevent fraud
     const isValid = verifyCallbackSignature(amount, merchantOrderId, signature);
     if (!isValid) {
-      console.error("Duitku callback signature mismatch! Fraud alert. Received:", signature);
+      console.error("[Callback] Signature mismatch! Received:", signature);
       return new NextResponse("Unauthorized: Signature mismatch", { status: 401 });
     }
+
+    console.log(`[Callback] Signature valid. ResultCode: ${resultCode}, OrderId: ${merchantOrderId}`);
 
     // 3. Fetch order details from database
     const { data: pesanan, error: fetchError } = await supabase
@@ -54,7 +58,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (fetchError || !pesanan) {
-      console.error(`Order ${merchantOrderId} not found for Duitku callback.`);
+      console.error(`[Callback] Order ${merchantOrderId} not found.`, fetchError);
       return new NextResponse("Not Found: Booking not found", { status: 404 });
     }
 
@@ -67,15 +71,11 @@ export async function POST(req: NextRequest) {
       availableCols = ["id", "status"];
     }
 
-    const getBookingStatus = (item: any) => {
-      return item.status || item.status_pembayaran || "";
-    };
-
-    const currentBookingStatus = getBookingStatus(pesanan);
+    const currentBookingStatus = pesanan.status || (pesanan as any).status_pembayaran || "";
 
     // Check if already processed to avoid duplicate triggers
     if (currentBookingStatus === "paid" || currentBookingStatus === "confirmed") {
-      console.log(`Order ${pesanan.kode_pesanan} is already marked as paid.`);
+      console.log(`[Callback] Order ${pesanan.kode_pesanan} already paid. Skipping.`);
       return new NextResponse("OK", { status: 200 });
     }
 
@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       updateFields.duitku_reference = reference;
     } else {
       nextStatus = "failed";
+      console.warn(`[Callback] Payment failed. ResultCode: ${resultCode}`);
     }
 
     // Set status dynamically (update both if both exist to keep them in sync!)
@@ -102,19 +103,30 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Update order in database
-    const { data: updatedPesanan, error: updateError } = await supabase
+    const { error: updateError } = await supabase
       .from("pesanan")
       .update(updateFields)
-      .eq("id", merchantOrderId)
-      .select()
-      .single();
+      .eq("id", merchantOrderId);
 
-    if (updateError || !updatedPesanan) {
-      console.error("Failed to update booking status in callback:", updateError);
+    if (updateError) {
+      console.error("[Callback] Failed to update booking status:", updateError);
       return new NextResponse("Internal Server Error", { status: 500 });
     }
 
-    // 5. Log status change
+    // 5. Re-fetch the complete updated pesanan with all fields including kamar join
+    const { data: updatedPesanan, error: refetchError } = await supabase
+      .from("pesanan")
+      .select("*, kamar(*)")
+      .eq("id", merchantOrderId)
+      .single();
+
+    if (refetchError || !updatedPesanan) {
+      console.error("[Callback] Failed to re-fetch updated booking:", refetchError);
+      // Status was updated, so still return OK to Duitku
+      return new NextResponse("OK", { status: 200 });
+    }
+
+    // 6. Log status change
     try {
       await supabase.from("pesanan_log").insert({
         pesanan_id: merchantOrderId,
@@ -122,28 +134,28 @@ export async function POST(req: NextRequest) {
         keterangan: `Pembayaran melalui Duitku callback. ResultCode: ${resultCode}. Method: ${paymentCode}`,
       });
     } catch (logErr) {
-      console.warn("Failed to write log for payment callback:", logErr);
+      console.warn("[Callback] Failed to write pesanan_log:", logErr);
     }
 
-    // 6. Trigger notifications in parallel if paid successfully
+    // 7. Trigger notifications if paid successfully
     if (nextStatus === "paid") {
-      console.log(`Payment success for ${pesanan.kode_pesanan}. Triggering emails and Telegram notifications.`);
-      
-      // Await notifications so Vercel keeps the serverless container alive until they complete
+      console.log(`[Callback] Payment SUCCESS for ${updatedPesanan.kode_pesanan}. Sending notifications...`);
+      console.log(`[Callback] Guest email: ${updatedPesanan.email}, name: ${updatedPesanan.nama_lengkap}`);
+
       await Promise.allSettled([
-        sendInvoiceEmail(updatedPesanan, pesanan.kamar)
-          .then((s) => console.log(`Email invoice sent: ${s}`))
-          .catch((e) => console.error("Email notification error:", e)),
-        sendTelegramNewOrderAlert(updatedPesanan, pesanan.kamar)
-          .then((s) => console.log(`Telegram alert sent: ${s}`))
-          .catch((e) => console.error("Telegram notification error:", e))
+        sendInvoiceEmail(updatedPesanan, updatedPesanan.kamar)
+          .then((s) => console.log(`[Callback] Email invoice sent: ${s}`))
+          .catch((e) => console.error("[Callback] Email notification error:", e)),
+        sendTelegramNewOrderAlert(updatedPesanan, updatedPesanan.kamar)
+          .then((s) => console.log(`[Callback] Telegram alert sent: ${s}`))
+          .catch((e) => console.error("[Callback] Telegram notification error:", e)),
       ]);
     }
 
     // Duitku expects 'OK' as plain text response to acknowledge successful callback
     return new NextResponse("OK", { status: 200 });
   } catch (err: any) {
-    console.error("Internal error in Duitku payment callback:", err);
+    console.error("[Callback] Internal error:", err.message);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

@@ -1,16 +1,43 @@
 import crypto from "crypto";
 import type { DuitkuInquiryRequest, DuitkuInquiryResponse } from "@/types";
 
+// Read env vars inside functions, NOT at module scope (prevents cold-start capture bug on Vercel)
+function getDuitkuConfig() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://merbabu-stay.qonypro.cloud"; // Hardcoded production fallback
+
+  return {
+    merchantCode: process.env.DUITKU_MERCHANT_CODE || "",
+    apiKey: process.env.DUITKU_API_KEY || "",
+    baseUrl:
+      process.env.DUITKU_ENV === "production"
+        ? "https://passport.duitku.com"
+        : "https://sandbox.duitku.com",
+    callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || appUrl}/api/payment/callback`,
+    returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || appUrl}/pesanan/sukses`,
+    expiryPeriod: 1440, // 24 hours in minutes
+  };
+}
+
+// Keep DUITKU_CONFIG as a getter for backward compatibility
 export const DUITKU_CONFIG = {
-  merchantCode: process.env.DUITKU_MERCHANT_CODE || "",
-  apiKey: process.env.DUITKU_API_KEY || "",
-  baseUrl:
-    process.env.DUITKU_ENV === "production"
+  get merchantCode() { return process.env.DUITKU_MERCHANT_CODE || ""; },
+  get apiKey() { return process.env.DUITKU_API_KEY || ""; },
+  get baseUrl() {
+    return process.env.DUITKU_ENV === "production"
       ? "https://passport.duitku.com"
-      : "https://sandbox.duitku.com",
-  callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/payment/callback`,
-  returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/pesanan/sukses`,
-  expiryPeriod: 1440, // 24 hours in minutes
+      : "https://sandbox.duitku.com";
+  },
+  get callbackUrl() {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://merbabu-stay.qonypro.cloud";
+    return `${appUrl}/api/payment/callback`;
+  },
+  get returnUrl() {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://merbabu-stay.qonypro.cloud";
+    return `${appUrl}/pesanan/sukses`;
+  },
+  expiryPeriod: 1440,
 };
 
 /**
@@ -21,7 +48,8 @@ export function generateDuitkuSignature(
   merchantOrderId: string,
   amount: number
 ): string {
-  const { merchantCode, apiKey } = DUITKU_CONFIG;
+  const merchantCode = process.env.DUITKU_MERCHANT_CODE || "";
+  const apiKey = process.env.DUITKU_API_KEY || "";
   const rawString = `${merchantCode}${merchantOrderId}${amount}`;
   return crypto.createHmac("sha256", apiKey).update(rawString).digest("hex");
 }
@@ -35,12 +63,13 @@ export function verifyCallbackSignature(
   merchantOrderId: string,
   receivedSignature: string
 ): boolean {
-  const { merchantCode, apiKey } = DUITKU_CONFIG;
+  const merchantCode = process.env.DUITKU_MERCHANT_CODE || "";
+  const apiKey = process.env.DUITKU_API_KEY || "";
   const rawString = `${merchantCode}${amount}${merchantOrderId}`;
-  
+
   // Duitku V2 Callback Signature: HMAC-SHA256(merchantCode + amount + merchantOrderId, apiKey)
   const calculatedHmac = crypto.createHmac("sha256", apiKey).update(rawString).digest("hex");
-  
+
   // Duitku V1 Callback Signature: MD5(merchantCode + amount + merchantOrderId + apiKey)
   const rawStringV1 = `${rawString}${apiKey}`;
   const calculatedMd5 = crypto.createHash("md5").update(rawStringV1).digest("hex");
@@ -66,19 +95,32 @@ export async function createDuitkuPayment(payload: {
   namaLengkap: string;
   paymentMethod?: string;
 }): Promise<DuitkuInquiryResponse> {
-  const signature = generateDuitkuSignature(payload.merchantOrderId, payload.amount);
+  const merchantCode = process.env.DUITKU_MERCHANT_CODE || "";
+  const apiKey = process.env.DUITKU_API_KEY || "";
+  const isDev = process.env.DUITKU_ENV !== "production";
+  const baseUrl = isDev ? "https://sandbox.duitku.com" : "https://passport.duitku.com";
+
+  // CRITICAL: Use the production URL for callback — never localhost
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://merbabu-stay.qonypro.cloud";
+  const callbackUrl = `${appUrl}/api/payment/callback`;
+  const returnUrl = `${appUrl}/pesanan/sukses?order_id=${payload.merchantOrderId}`;
+
+  console.log(`[Duitku] Creating payment. CallbackURL: ${callbackUrl}`);
+
+  const rawString = `${merchantCode}${payload.merchantOrderId}${payload.amount}`;
+  const signature = crypto.createHmac("sha256", apiKey).update(rawString).digest("hex");
 
   const requestBody: any = {
-    merchantCode: DUITKU_CONFIG.merchantCode,
+    merchantCode: merchantCode,
     paymentAmount: payload.amount,
     merchantOrderId: payload.merchantOrderId,
     productDetails: payload.productDetails,
     email: payload.email,
     phoneNumber: payload.noHp,
-    callbackUrl: DUITKU_CONFIG.callbackUrl,
-    returnUrl: `${DUITKU_CONFIG.returnUrl}?order_id=${payload.merchantOrderId}`,
+    callbackUrl: callbackUrl,
+    returnUrl: returnUrl,
     signature: signature,
-    expiryPeriod: DUITKU_CONFIG.expiryPeriod,
+    expiryPeriod: 1440,
     customerDetail: {
       firstName: payload.namaLengkap,
       email: payload.email,
@@ -91,7 +133,7 @@ export async function createDuitkuPayment(payload: {
     requestBody.paymentMethod = payload.paymentMethod;
   }
 
-  const endpoint = `${DUITKU_CONFIG.baseUrl}/webapi/api/merchant/v2/inquiry`;
+  const endpoint = `${baseUrl}/webapi/api/merchant/v2/inquiry`;
 
   const res = await fetch(endpoint, {
     method: "POST",
